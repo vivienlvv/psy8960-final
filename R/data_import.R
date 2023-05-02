@@ -6,8 +6,8 @@ library(tidyverse)
 # Data Import and Cleaning
 
 ## Importing data
-employee_tbl = read_delim("../data/dataset.csv", delim = "+", col_names = TRUE)
-review_tbl =  read_delim("../data/satisfaction_reviews.csv", delim = ".", col_names = c("pros", "cons", "employeeID"))
+employee_tbl = read_delim("../data/dataset.csv", delim = "+", col_names = TRUE, show_col_types = FALSE)
+review_tbl =  read_delim("../data/satisfaction_reviews.csv", delim = ".", col_names = c("pros", "cons", "employeeID"), show_col_types = FALSE)
 
 ## Merging the two datasets by employeeID 
 combined_tbl = employee_tbl %>%
@@ -19,4 +19,3 @@ combined_tbl = employee_tbl %>%
 
 ## Saving joined data into an object
 saveRDS(combined_tbl, "../data/combined_tbl.RDS")
-  
