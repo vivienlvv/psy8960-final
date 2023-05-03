@@ -15,7 +15,8 @@ combined_tbl = employee_tbl %>%
          # Turning all strings to factor 
          across(where(is.character), as.factor)) %>%
   # Performing left join to keep all employees because there are missing satisfaction reviews
-  left_join(y = review_tbl, by = "employeeID")
+  left_join(y = review_tbl, by = "employeeID") %>%
+  mutate(employeeID = as.character(employeeID))
 
 ## Saving joined data into an object
 saveRDS(combined_tbl, "../data/combined_tbl.RDS")
