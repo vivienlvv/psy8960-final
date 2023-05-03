@@ -12,6 +12,8 @@ library(doParallel)
 library(ldatuning)
 library(topicmodels)
 
+library(caret)
+
 # Data Import and Cleaning
 final_tbl = readRDS("../data/combined_tbl.RDS")
 
@@ -142,11 +144,18 @@ pros_dtm_mat = data.frame(employeeID = rownames(pros_dtm_mat), pros_dtm_mat)
 cons_dtm_mat = as.matrix(cons_dtm)
 cons_dtm_mat = data.frame(employeeID = rownames(cons_dtm_mat), cons_dtm_mat)
 
-####
-ml_tbl = final_tbl %>% 
-  select(-pros, -cons) %>%
+#### Tibble without language features
+ml_bg_tbl =  final_tbl %>% select(-pros, -cons, # Remove text entries
+                               -EmployeeCount, # Remove these 3 variables with no variance
+                               -StandardHours,
+                               -Over18)
+ml_tbl = ml_bg_tbl %>% select(-employeeID)
+
+#### Tibble  with numeric and language features
+ml_combined_tbl = ml_bg_tbl %>% 
   left_join(y = pros_dtm_mat, by = "employeeID") %>% 
-  left_join(y = cons_dtm_mat, by = "employeeID")
+  left_join(y = cons_dtm_mat, by = "employeeID") %>%
+  select(-employeeID)
   
 
 
@@ -158,18 +167,70 @@ ml_tbl = final_tbl %>%
 #################################################################################
 
 ## Creating train and test splits 
-index = createDataPartition(gss_tbl$workhours, p = 0.75, list = FALSE)
-gss_tbl_train = gss_tbl[index,]
-gss_tbl_test = gss_tbl[-index,]
+index = createDataPartition(ml_tbl$Attrition, p = 0.75, list = FALSE)
+ml_tbl_train = ml_tbl[index,]
+ml_tbl_test = ml_tbl[-index,]
 
 ## Creating 10 folds used in cross-validation from training set
 ### Need to do it on y otherwise there might be fold overlap
-training_folds = createFolds(gss_tbl_train$workhours, 10)
+training_folds = createFolds(ml_tbl_train$Attrition, 10)
 
-## Creating reusable trainControl object for all 4 models 
+## Creating reusable trainControl object for all models
 reuseControl = trainControl( method = "cv", number = 10, search = "grid", 
                              indexOut = training_folds, verboseIter = TRUE)
 
+
+## Creating vector containing info for each method
+mod_vec = c("glm" , "glmnet", "ranger", "xgbTree", "svmRadialCost")
+
+
+
+## Turning on parallelization
+local_cluster = makeCluster(detectCores() - 1)   
+registerDoParallel(local_cluster)
+
+
+## Model Training
+mod_ls = list()
+
+for(i in 1:length(mod_vec)){
+  
+  method = mod_vec[i]
+  
+  # Getting pre-processing options based on method used
+  if(method == "glm" | method == "glmnet"){
+    pre_process = c("center", "scale", "nzv", "medianImpute")
+  }else{
+    pre_process = "medianImpute"
+  }
+  
+  # Training model 
+  mod = train(Attrition ~ .,
+              data = ml_tbl_train,
+              method = method,
+              metric = "Accuracy",
+              na.action = na.pass,
+              trControl = reuseControl,
+              preProcess = pre_process)
+  
+  # Saving model from each iteration to the pre-defined list 
+  mod_ls[[i]] = mod
+}
+
+## Turning off parallelization
+stopCluster(local_cluster)
+registerDoSEQ()
+
+
+## Output
+results = function(train_mod = mod_ls[[1]], test_data = ml_tbl_test){
+  algo = train_mod$method
+  cv_accuracy = str_remove(format(round(max(train_mod$results$Accuracy), 2), nsmall = 2), "^\\d")
+  
+  preds = predict(train_mod, newdata = test_data, na.action = na.pass)
+  ho_accuracy = str_remove(format(round(sum(preds == ml_tbl_test$Attrition)/nrow(test_data), 2), nsmall = 2), "^\\d")
+  return(c("algo" = algo, "cv_accuracy" = cv_accuracy, "ho_accuracy" = ho_accuracy ))
+}
 
 
 
