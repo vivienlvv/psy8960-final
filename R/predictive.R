@@ -163,7 +163,7 @@ ml_combined_tbl = ml_bg_tbl %>%
 ### STEP 2: Building predictive models 
 
 #################################################################################
-# NEED TO TWEAK THE CODE BELOW
+# NEED TO TWEAK THE CODE BELOW: ABSTRACTION FOR ML_COMBINED_TBL TOO
 #################################################################################
 
 ## Creating train and test splits 
