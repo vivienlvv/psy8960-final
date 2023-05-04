@@ -1,0 +1,6 @@
+Model Features,Algorithm,Cross-validated Accuracy,Holdout Accuracy
+Demo + Lang,glm,.88,.86
+Demo + Lang,glmnet,.89,.87
+Demo + Lang,ranger,.99,.86
+Demo + Lang,xgbTree,.98,.88
+Demo + Lang,svmRadialCost,.86,.84
