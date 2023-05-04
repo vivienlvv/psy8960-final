@@ -19,8 +19,6 @@ final_tbl = readRDS("../data/combined_tbl.RDS")
 
 
 
-# Analysis 
-
 ## Purpose: Build a ML model that predicts turnover (which I believe is the "Attrition column"?), binary 
 
 ### STEP 1: Feature Engineering 
@@ -85,11 +83,13 @@ bigram_Tokenizer <- function(x) {
 
 pros_dtm = cleaned_corpus_pros %>%
   tm_filter(bigram_filter) %>% 
-  DocumentTermMatrix(control = list(tokenize = bigram_Tokenizer)) 
+  DocumentTermMatrix(control = list(tokenize = bigram_Tokenizer)) %>% 
+  removeSparseTerms(sparse = 0.997)
 
 cons_dtm = cleaned_corpus_cons %>% 
   tm_filter(bigram_filter) %>% 
-  DocumentTermMatrix(control = list(tokenize = bigram_Tokenizer)) 
+  DocumentTermMatrix(control = list(tokenize = bigram_Tokenizer)) %>% 
+  removeSparseTerms(sparse = 0.997)
 
 
 
@@ -144,14 +144,13 @@ pros_dtm_mat = data.frame(employeeID = rownames(pros_dtm_mat), pros_dtm_mat)
 cons_dtm_mat = as.matrix(cons_dtm)
 cons_dtm_mat = data.frame(employeeID = rownames(cons_dtm_mat), cons_dtm_mat)
 
-#### Tibble without language features
-ml_bg_tbl =  final_tbl %>% select(-pros, -cons, # Remove text entries
-                               -EmployeeCount, # Remove these 3 variables with no variance
-                               -StandardHours,
-                               -Over18)
+# This is the demographic tibble where I removed the text entries and vars w/o var
+ml_bg_tbl =  final_tbl %>% select(-c(pros, cons, EmployeeCount, StandardHours, Over18))
+
+#### ML Tibble without language features 
 ml_tbl = ml_bg_tbl %>% select(-employeeID)
 
-#### Tibble  with numeric and language features
+#### ML Tibble  with numeric and language features
 ml_combined_tbl = ml_bg_tbl %>% 
   left_join(y = pros_dtm_mat, by = "employeeID") %>% 
   left_join(y = cons_dtm_mat, by = "employeeID") %>%
@@ -159,29 +158,61 @@ ml_combined_tbl = ml_bg_tbl %>%
   
 
 
+# Analysis 
 
 ### STEP 2: Building predictive models 
 
-#################################################################################
-# NEED TO TWEAK THE CODE BELOW: ABSTRACTION FOR ML_COMBINED_TBL TOO
-#################################################################################
+#### Creating a function that takes full dataset as input and give models as output
 
-## Creating train and test splits 
-index = createDataPartition(ml_tbl$Attrition, p = 0.75, list = FALSE)
-ml_tbl_train = ml_tbl[index,]
-ml_tbl_test = ml_tbl[-index,]
-
-## Creating 10 folds used in cross-validation from training set
-### Need to do it on y otherwise there might be fold overlap
-training_folds = createFolds(ml_tbl_train$Attrition, 10)
-
-## Creating reusable trainControl object for all models
-reuseControl = trainControl( method = "cv", number = 10, search = "grid", 
-                             indexOut = training_folds, verboseIter = TRUE)
-
-
-## Creating vector containing info for each method
-mod_vec = c("glm" , "glmnet", "ranger", "xgbTree", "svmRadialCost")
+model_building = function(input_tbl){
+  
+  ## Creating train and test splits 
+  index = createDataPartition(input_tbl$Attrition, p = 0.75, list = FALSE)
+  train_tbl = input_tbl[index,]
+  test_tbl = input_tbl[-index,]
+  
+  ## Creating 10 folds used in cross-validation from training set
+  ### Need to do it on y otherwise there might be fold overlap
+  training_folds = createFolds(train_tbl$Attrition, 10)
+  
+  ## Creating reusable trainControl object for all models
+  reuseControl = trainControl( method = "cv", number = 10, search = "grid", 
+                               indexOut = training_folds, verboseIter = TRUE)
+  
+  
+  ## Creating vector containing info for each method
+  mod_vec = c("glm" , "glmnet", "ranger", "xgbTree", "svmRadialCost")
+  
+  
+  ## Model Training
+  mod_ls = list()
+  
+  for(i in 1:length(mod_vec)){
+    
+    method = mod_vec[i]
+    
+    # Getting pre-processing options based on method used
+    if(method == "glm" | method == "glmnet"){
+      pre_process = c("center", "scale", "nzv", "medianImpute")
+    }else{
+      pre_process = "medianImpute"
+    }
+    
+    # Training model 
+    mod = train(Attrition ~ .,
+                data = train_tbl,
+                method = method,
+                metric = "Accuracy",
+                na.action = na.pass,
+                trControl = reuseControl,
+                preProcess = pre_process)
+    
+    # Saving model from each iteration to the pre-defined list 
+    mod_ls[[i]] = mod
+  }
+  
+  return(list(mod_ls, test_tbl))
+}
 
 
 
@@ -189,49 +220,50 @@ mod_vec = c("glm" , "glmnet", "ranger", "xgbTree", "svmRadialCost")
 local_cluster = makeCluster(detectCores() - 1)   
 registerDoParallel(local_cluster)
 
-
-## Model Training
-mod_ls = list()
-
-for(i in 1:length(mod_vec)){
-  
-  method = mod_vec[i]
-  
-  # Getting pre-processing options based on method used
-  if(method == "glm" | method == "glmnet"){
-    pre_process = c("center", "scale", "nzv", "medianImpute")
-  }else{
-    pre_process = "medianImpute"
-  }
-  
-  # Training model 
-  mod = train(Attrition ~ .,
-              data = ml_tbl_train,
-              method = method,
-              metric = "Accuracy",
-              na.action = na.pass,
-              trControl = reuseControl,
-              preProcess = pre_process)
-  
-  # Saving model from each iteration to the pre-defined list 
-  mod_ls[[i]] = mod
-}
+# Model training 
+ml_tbl_output = model_building(ml_tbl)
+ml_combined_tbl_output = model_building(ml_combined_tbl)
 
 ## Turning off parallelization
 stopCluster(local_cluster)
 registerDoSEQ()
 
 
-## Output
-results = function(train_mod = mod_ls[[1]], test_data = ml_tbl_test){
+
+
+
+## Preparing output tables
+
+#################################################################################
+# CONSIDER USING OTHER EVAL METRICS?
+#################################################################################
+
+results = function(train_mod = mod_ls[[1]], test_data = ml_tbl_test, features){
   algo = train_mod$method
   cv_accuracy = str_remove(format(round(max(train_mod$results$Accuracy), 2), nsmall = 2), "^\\d")
-  
   preds = predict(train_mod, newdata = test_data, na.action = na.pass)
-  ho_accuracy = str_remove(format(round(sum(preds == ml_tbl_test$Attrition)/nrow(test_data), 2), nsmall = 2), "^\\d")
-  return(c("algo" = algo, "cv_accuracy" = cv_accuracy, "ho_accuracy" = ho_accuracy ))
+  ho_accuracy = str_remove(format(round(sum(preds == test_data$Attrition)/nrow(test_data), 2), nsmall = 2), "^\\d")
+  return(c("Features" = features,
+           "Algorithm" = algo,
+           "Cross-validated Accuracy" = cv_accuracy,
+           "Holdout Accuracy" = ho_accuracy ))
 }
 
+ml_output_tbl = as_tibble(t(sapply(ml_tbl_output[[1]], results,
+                                   test_data = ml_tbl_output[[2]],
+                                   features = "Demo only")))
+ml_output_tbl
+ml_combined_output_tbl = as_tibble(t(sapply(ml_combined_tbl_output[[1]], results,
+                                            test_data = ml_combined_tbl_output[[2]],
+                                            features = "Demo + Lang")))
+ml_combined_output_tbl
+
+### Saving them for now 
+write_csv(ml_output_tbl, "../out/part2_ml_output.csv")
+write_csv(ml_combined_output_tbl, "../out/part2_ml_combined_output.csv")
+
+  
+  
 
 
 # Visualization
