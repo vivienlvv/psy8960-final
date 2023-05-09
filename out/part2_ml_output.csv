@@ -1,6 +1,6 @@
-Model Features,Algorithm,Cross-validated Accuracy,Holdout Accuracy
-Demo only,glm,.89,.87
-Demo only,glmnet,.90,.87
-Demo only,ranger,.99,.86
-Demo only,xgbTree,.99,.84
-Demo only,svmRadialCost,.89,.85
+Features,Algorithm,cv_Accuracy,ho_Accuracy,ho_Precision,ho_Recall,ho_F1
+Background only,glm,.89,.88,.90,.90,.93
+Background only,glmnet,.90,.89,.90,.90,.94
+Background only,ranger,.99,.87,.88,.88,.93
+Background only,xgbTree,.98,.87,.89,.89,.92
+Background only,svmRadialCost,.89,.88,.87,.87,.93

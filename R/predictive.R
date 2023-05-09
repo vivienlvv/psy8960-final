@@ -19,7 +19,7 @@ final_tbl = readRDS("../data/combined_tbl.RDS")
 
 
 
-## Purpose: Build a ML model that predicts turnover (which I believe is the "Attrition column"?), binary 
+## Purpose: Build a ML model that predicts turnover (Column "Attrition"), i.e., a binary classification model 
 
 ### STEP 1: Feature Engineering 
 
@@ -35,10 +35,6 @@ corpus_cons = VCorpus(VectorSource(final_tbl$cons))
 ##### Input: corpus object 
 cleaning_corpus = function(corpus_obj){
   cleaned_corpus = corpus_obj %>%
-    tm_map(content_transformer(str_replace_all), pattern = "’", replacement = "'") %>%
-    # tm_map(content_transformer(str_replace_all), pattern = "—|“|”|‘", replacement = "") %>%
-    # This step was performed to replace any abbreviations before converting text to lower case because the abbreviation library is case sensitive 
-    tm_map(content_transformer(str_replace_all), pattern = "\\/", replacement = " ") %>%
     tm_map(content_transformer(replace_abbreviation)) %>% 
     tm_map(content_transformer(replace_contraction)) %>% 
     tm_map(content_transformer(str_to_lower)) %>%
@@ -57,10 +53,10 @@ cleaning_corpus = function(corpus_obj){
 cleaned_corpus_pros = cleaning_corpus(corpus_pros)
 cleaned_corpus_cons = cleaning_corpus(corpus_cons)
 
-corpus_pros[[1]]$content
-cleaned_corpus_pros[[1]]$content
-corpus_cons[[1]]$content
-cleaned_corpus_cons[[1]]$content
+# corpus_pros[[1]]$content
+# cleaned_corpus_pros[[1]]$content
+# corpus_cons[[1]]$content
+# cleaned_corpus_cons[[1]]$content
 
 
 ##### 1.1.3 Creating n-gram features from document-term matrix 
@@ -69,18 +65,14 @@ bigram_filter = function(x){
   bool = nchar(stripWhitespace(x$content)[[1]]) > 0 & !is.na(x$content[[1]])
   return(bool)
 }
-# post_retained = sapply(cleaned_corpus_pros, bigram_filter)
-# temp = final_tbl %>% select(employeeID, pros, cons) 
-# temp[!post_retained, ]
+
 
 ## Creating bigram tokenizer using Weka
 bigram_Tokenizer <- function(x) { 
   NGramTokenizer(x, Weka_control(min = 1, max = 2))
 }
 
-
 ## Creating bigram DTM for pros and cons corpora 
-
 pros_dtm = cleaned_corpus_pros %>%
   tm_filter(bigram_filter) %>% 
   DocumentTermMatrix(control = list(tokenize = bigram_Tokenizer)) %>% 
@@ -92,49 +84,6 @@ cons_dtm = cleaned_corpus_cons %>%
   removeSparseTerms(sparse = 0.997)
 
 
-
-##### 1.1.4 LDA topics (NEED TO RECONSIDER THIS PART; NOT INCORPORATED FOR NOW)
-
-
-###### LDA Tuning: Finding optimal number of topics  
-## Turning on parallelization
-local_cluster = makeCluster(detectCores() - 1)   
-registerDoParallel(local_cluster)
-
-## Finding # of topics
-lda_tuning = function(dtm){
-  FindTopicsNumber(dtm,
-                   topics = seq(2, 10, 1),
-                   metrics = c("Griffiths2004",
-                               "CaoJuan2009",
-                               "Arun2010",
-                               "Deveaud2014"),
-                   control = list(seed = 2023),
-                   verbose = TRUE)
-}
-FindTopicsNumber_plot(lda_tuning(pros_dtm))
-FindTopicsNumber_plot(lda_tuning(cons_dtm))
-
-
-## Turning off parallelization
-stopCluster(local_cluster)
-registerDoSEQ()
-
-
-###### LDA topic model building  
-
-# Actual fitting of LDA model 
-lda_results = LDA(pros_dtm, 5,
-                       control = list(seed = 2023))
-
-## Posterior probabilities representing the probability that a word belongs to a topic
-lda_betas = tidy(lda_results, matrix = "beta")
-
-## Posterior probabilities of documents about each topic
-lda_gammas = tidy(lda_results, matrix = "gamma")
-
-
-
 #### 1.2 Combining features 
 
 ##### Getting n-gram features in matrix form to be merged with original dataset 
@@ -144,7 +93,7 @@ pros_dtm_mat = data.frame(employeeID = rownames(pros_dtm_mat), pros_dtm_mat)
 cons_dtm_mat = as.matrix(cons_dtm)
 cons_dtm_mat = data.frame(employeeID = rownames(cons_dtm_mat), cons_dtm_mat)
 
-# This is the demographic tibble where I removed the text entries and vars w/o var
+# This is the demographic tibble where I removed the text entries and vars w/o variance
 ml_bg_tbl =  final_tbl %>% select(-c(pros, cons, EmployeeCount, StandardHours, Over18))
 
 #### ML Tibble without language features 
@@ -158,6 +107,7 @@ ml_combined_tbl = ml_bg_tbl %>%
   
 
 
+
 # Analysis 
 
 ### STEP 2: Building predictive models 
@@ -165,6 +115,8 @@ ml_combined_tbl = ml_bg_tbl %>%
 #### Creating a function that takes full dataset as input and give models as output
 
 model_building = function(input_tbl){
+  
+  set.seed(2023)
   
   ## Creating train and test splits 
   index = createDataPartition(input_tbl$Attrition, p = 0.75, list = FALSE)
@@ -215,13 +167,14 @@ model_building = function(input_tbl){
 }
 
 
-
 ## Turning on parallelization
 local_cluster = makeCluster(detectCores() - 1)   
 registerDoParallel(local_cluster)
 
 # Model training 
+## Training models with only background information
 ml_tbl_output = model_building(ml_tbl)
+## Training models with both background and language features
 ml_combined_tbl_output = model_building(ml_combined_tbl)
 
 ## Turning off parallelization
@@ -231,40 +184,49 @@ registerDoSEQ()
 
 
 
+# Publication
 
 ## Preparing output tables
 
-#################################################################################
-# CONSIDER USING OTHER EVAL METRICS?
-#################################################################################
+# Creating a function that takes model list and test data as input and return 
+# nicely formatted APA table 
 
 results = function(train_mod = mod_ls[[1]], test_data = ml_tbl_test, features){
   algo = train_mod$method
+
+  # Creating confusion matrix to get holdout metrics
+  preds_y = predict(train_mod, newdata = test_data, na.action = na.pass) 
+  obs_y = test_data$Attrition
+  confusion_mat = confusionMatrix(preds_y, obs_y)
+  
   cv_accuracy = str_remove(format(round(max(train_mod$results$Accuracy), 2), nsmall = 2), "^\\d")
-  preds = predict(train_mod, newdata = test_data, na.action = na.pass)
-  ho_accuracy = str_remove(format(round(sum(preds == test_data$Attrition)/nrow(test_data), 2), nsmall = 2), "^\\d")
+  ho_accuracy = str_remove(format(round(sum(preds_y == test_data$Attrition)/nrow(test_data), 2), nsmall = 2), "^\\d")
+  
+  ho_precision = str_remove(format(round(confusion_mat$byClass[["Precision"]], 2), nsmall = 2), "^\\d")
+  ho_recall = str_remove(format(round(confusion_mat$byClass[["Recall"]], 2), nsmall = 2), "^\\d")
+  ho_f1 = str_remove(format(round(confusion_mat$byClass[["F1"]], 2), nsmall = 2), "^\\d")
+    
+  
   return(c("Features" = features,
            "Algorithm" = algo,
-           "Cross-validated Accuracy" = cv_accuracy,
-           "Holdout Accuracy" = ho_accuracy ))
+           "cv_Accuracy" = cv_accuracy,
+           "ho_Accuracy" = ho_accuracy,
+           "ho_Precision" = ho_precision,
+           "ho_Recall" = ho_precision,
+           "ho_F1" = ho_f1))
 }
+
 
 ml_output_tbl = as_tibble(t(sapply(ml_tbl_output[[1]], results,
                                    test_data = ml_tbl_output[[2]],
-                                   features = "Demo only")))
+                                   features = "Background only")))
 ml_output_tbl
+
 ml_combined_output_tbl = as_tibble(t(sapply(ml_combined_tbl_output[[1]], results,
                                             test_data = ml_combined_tbl_output[[2]],
-                                            features = "Demo + Lang")))
+                                            features = "Background + Lang")))
 ml_combined_output_tbl
 
 ### Saving them for now 
 write_csv(ml_output_tbl, "../out/part2_ml_output.csv")
 write_csv(ml_combined_output_tbl, "../out/part2_ml_combined_output.csv")
-
-  
-  
-
-
-# Visualization
-# Publication
