@@ -1,30 +1,57 @@
 ---
-title: "Part 4  Web Application"
+title: "PSY8960- Final Exam Part 4  Web Application"
 author: "Vivien Lee"
-date: "2023-05-01"
-output: html_document
+date: "`r format(Sys.Date())`"
+output: 
+  html_document:
+    df_print: paged
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../out/")
+  })
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+
+# **Script Settings and Resources**
+In this section, I loaded all required libraries for cleaning and analysis. 
+```{r setup, message = FALSE}
+library(tidyverse)
 ```
 
-## R Markdown
+An interactive web app is available by [clicking this link instead](https://vivienlvv.shinyapps.io/shiny_week8/).\
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# **Data Import and Cleaning**
+```{r cleaning, message= FALSE}
 
-```{r cars}
-summary(cars)
+# Importing rds object frorm part 1
+dat = readRDS("../data/combined_tbl.RDS")
+
+# Creating skinny object by retaining only relevant columns 
+skinny_dat = dat %>% select(MonthlyIncome, Attrition, JobSatisfaction,
+                            Department, EducationField, Gender, JobRole)
+
+saveRDS(skinny_dat, "../people_dashboard/people_dashboard_dat.rds")
 ```
 
-## Including Plots
+In dashboard.Rmd, export a skinny dataset appropriate for the web application described below starting from the object you created in Part 1. In this file, explain why you chose the particular approach you chose to accomplish the steps below. Also include a comment containing a link to your app running on shinyapps.io.
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+2. In a shiny app called people_dashboard, enable users to do the following: \ 
+- Choose whether they want to examine monthly pay, turnover status, or overall job satisfaction. \ 
+- Select a subset of data by department, field of education, gender, or job role.
+\ 
+\ 
+
+3. The outcome of these selections should be: \ 
+- The app displays an appropriate univariate visualization given whatever combination of options they choose. \ 
+- The app displays a summary table of means and SDs of the selected outcome variable, split by any selected filtering terms. \ 
+
+
+
+
+
+
+
+
+
