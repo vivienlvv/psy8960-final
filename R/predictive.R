@@ -15,8 +15,6 @@ library(caret)
 final_tbl = readRDS("../data/combined_tbl.RDS")
 
 
-
-
 ## Purpose: Build a ML model that predicts turnover ("Attrition"), i.e., a binary classification model 
 
 ### STEP 1: Feature Engineering 
@@ -66,7 +64,6 @@ bigram_filter = function(x){
   bool = nchar(stripWhitespace(x$content)[[1]]) > 0 & !is.na(x$content[[1]])
   return(bool)
 }
-
 
 ## Creating bigram tokenizer using Weka
 bigram_Tokenizer <- function(x) { 
@@ -195,20 +192,6 @@ registerDoSEQ()
 
 # Publication
 
-## Answers to required questions:
-
-### 1. My choice of final model
-### Based on the table I created, I believe that the best model would be random forest if the selection criterion 
-### chosen is accuracy. Random Forest has the greatest accuracy at 99% which means it is able to 99% of the time it is able to make predictions 99% of the time. Other models such as logistic regression (0.89) and elastic net (0.90) have lower accuracy. 
-
-### 2. What characteristics of how you created the final model likely made the biggest impact in maximizing its performance? How do you know? Be sure to interpret specific numbers in the table you just created.
-###
-
-
-### 3.  What is the incremental predictive accuracy gained by including text data in your model versus not including text data?
-### As shown in the table, there is not really incremental predictive accuracy gained by including text data in our model versus not including text data. This is likely because the text features are based on people's view of the advantages and disadvantages of working at the company which may already be highly correlated with other variables on background information such as job satisfaction. Since adding highly collinear features will not help improve model performance, we did not observe any notable incremental predictive accuracy by including text data. 
-
-
 ## Preparing output tables
 
 ### Creating a function that takes model list and test data as input and return 
@@ -250,10 +233,51 @@ ml_combined_output_tbl = as_tibble(t(sapply(ml_combined_tbl_output[[1]], results
                                             test_data = ml_combined_tbl_output[[2]],
                                             features = "Background + Lang")))
 
-#### Making final output table 
-final_output_tbl = rbind(ml_output_tbl, ml_combined_output_tbl)
-final_output_tbl
+## STEP 1. Comparing all models to find the "best" model
 
-
+#### Making output table with all models 
+all_output_tbl = rbind(ml_output_tbl, ml_combined_output_tbl)
+all_output_tbl
 ### Saving final output comparison table 
-write_csv(final_output_tbl, "../out/part2_model_comparison.csv")
+write_csv(all_output_tbl, "../out/part2_all_models.csv")
+
+### 1) My choice of final model
+### Based on the table I created, I believe that the best model would be random 
+### forest if the selection criterion chosen is accuracy. If we look at output from algorithms trained using background info only (still the same when lang features are included), Random 
+### Forest has the greatest accuracy at 99% which means it is able to 99% of the
+### time it is able to make predictions 99% of the time. Other models such as logistic 
+### regression (0.89) and elastic net (0.90) have lower accuracy. 
+
+### 2) What characteristics of how you created the final model likely made the biggest impact in maximizing its performance? How do you know? Be sure to interpret specific numbers in the table you just created.
+### I think the final model- random forest- likely have the best performance 
+### (0.99 accuracy) because it is able to capture non-linearity (i.e., higher order)
+### effects among predictors that logistic (0.89 accuracy ) and elastic net 
+### regression (0.90 accuracy) are not well-equipped to do. This explanation is 
+### also supported by the fact that xgboost, another tree-based model, is has 
+### an accuracy of 0.98 which is much higher than logistic regression and 
+### elastic regression models. 
+############################################################################### 
+############################## NEED TO ADD ANSWER HERE ########################
+############################################################################### 
+
+
+## STEP 2. For the best model, comparing accuracy with and without language features
+
+#### Making output table with only final model, i.e., random forest with and
+#### without language features
+final_output_tbl = all_output_tbl %>% filter(Algorithm == "ranger")
+### Saving final output comparison table 
+write_csv(final_output_tbl, "../out/part2_final_model.csv")
+
+### 3)  What is the incremental predictive accuracy gained by including text data in your model versus not including text data?
+### As shown in the table, there is not really incremental predictive accuracy 
+### (both 0.99) gained by including text data in our model versus not including 
+### text data. This is likely because the text features are based on people's 
+### view of the advantages and disadvantages of working at the company which 
+### may already be highly correlated with other variables on background 
+### information such as job satisfaction. Since adding highly collinear features
+### will be redundant, it is not surprising that we did not observe any notable 
+### incremental predictive accuracy by including text data.
+
+
+
