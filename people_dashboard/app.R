@@ -45,9 +45,7 @@ ui = fluidPage(
     # Display Plots and Tables
     mainPanel(
       width = 6,
-      # h4("Univariate Visualization"),
       plotOutput("histo"),
-      # h4("Output Table"),
       tableOutput("output_tbl")
     )
   ) 
