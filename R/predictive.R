@@ -256,16 +256,14 @@ write_csv(all_output_tbl, "../out/part2_all_models.csv")
 ### regression (0.89) and elastic net (0.90) have lower accuracy. 
 
 ### 2) What characteristics of how you created the final model likely made the biggest impact in maximizing its performance? How do you know? Be sure to interpret specific numbers in the table you just created.
+### I think my choice of algorithm likely had the biggest impact in maximizing the model. 
 ### I think the final model- random forest- likely have the best performance 
 ### (0.99 accuracy) because it is able to capture non-linearity (i.e., higher order)
 ### effects among predictors that logistic (0.89 accuracy) and elastic net 
 ### regression (0.90 accuracy) are not well-equipped to do. This explanation is 
-### also supported by the fact that xgboost, another tree-based model, also has 
+###  supported by the fact that xgboost, another tree-based model, also has 
 ### an accuracy of 0.98 which is much higher than logistic regression and 
-### elastic regression models. 
-############################################################################### 
-############################## NEED TO ADD ANSWER HERE ########################
-############################################################################### 
+### Other characteristics like 
 
 
 ## STEP 2. For the best model, comparing accuracy with and without language features
