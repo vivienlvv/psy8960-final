@@ -17,7 +17,6 @@ In this section, I loaded all required libraries for cleaning and analysis.
 library(tidyverse)
 ```
 
-An interactive web app is available by [clicking this link instead](https://vivienlvv.shinyapps.io/shiny_week8/).\
 
 
 # **Data Import and Cleaning**
@@ -38,6 +37,9 @@ saveRDS(skinny_dat, "../people_dashboard/people_dashboard_dat.rds")
 
 
 # **Explanation on specific approach and decisions** 
+My interactive people dashboard app is available by [clicking this link instead]( https://vivienlvv.shinyapps.io/people_dashboard/). 
+\n
+
 In dashboard.Rmd, export a skinny dataset appropriate for the web application described below starting from the object you created in Part 1. In this file, explain why you chose the particular approach you chose to accomplish the steps below. Also include a comment containing a link to your app running on shinyapps.io.
 
 2. In a shiny app called people_dashboard, enable users to do the following: \ 
