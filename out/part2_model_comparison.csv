@@ -3,4 +3,7 @@ Background only,glm,.89,.88,.90,.90,.93
 Background only,glmnet,.90,.89,.90,.90,.94
 Background only,ranger,.99,.87,.88,.88,.93
 Background only,xgbTree,.98,.87,.89,.89,.92
-Background only,svmRadialCost,.89,.88,.87,.87,.93
+Background + Lang,glm,.89,.87,.90,.90,.93
+Background + Lang,glmnet,.89,.88,.90,.90,.93
+Background + Lang,ranger,.99,.86,.87,.87,.92
+Background + Lang,xgbTree,.98,.86,.88,.88,.92
