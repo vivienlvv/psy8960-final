@@ -13,7 +13,6 @@ ui = fluidPage(
   # Sidebar with a select input for 
   sidebarLayout(
     sidebarPanel(
-      tags$style(".well {background-color:[#ADD8E6];}"),
       width = 2,
       # This is a selector for outcome variable
       selectInput("outcome_var", "Select Outcome Variable:",
@@ -46,9 +45,9 @@ ui = fluidPage(
     # Display Plots and Tables
     mainPanel(
       width = 6,
-      h2("Univariate Visualization"),
+      # h4("Univariate Visualization"),
       plotOutput("histo"),
-      h2("Output Table"),
+      # h4("Output Table"),
       tableOutput("output_tbl")
     )
   ) 
@@ -65,6 +64,7 @@ server = function(input, output){
   # 1. Selecting the outcome of interest & to slim down data even more
   dashboard_data = dashboard_data %>%
     select(input$outcome_var, Department, EducationField, Gender, JobRole)
+
 
   # 2. Subsetting data by selected columns 
   if(input$department != "All"){
@@ -89,23 +89,26 @@ server = function(input, output){
   output$histo = renderPlot({
     df = dataInput()
     
-    # Creating histogram if selected outcome is not Turnover
-    if(input$outcome_var != "Attrition"){
-        hist_title = paste0("Histogram")
+    # Creating histogram if selected outcome is Monthly Income
+    if(input$outcome_var == "MonthlyIncome"){
+        hist_title = "Histogram for Monthly Income"
         ggplot(df, aes_string(x = input$outcome_var, fill = input$outcome_var)) +
           geom_histogram(bins = 30, fill = "lightblue") +
           theme_minimal() + 
-          labs(title = hist_title) +
+          labs(title = hist_title,
+               x = "Monthly Income", y = "Frequency") +
           theme(axis.text = element_text(size = 15),
                 title = element_text(size = 15))
     }
-    # Creating bar graph if selected outcome is Turnover
+    # Creating bar graph if selected outcome is Turnover or Job Satisfaction
     else{
-        bplot_title = paste0("Counts")
+        x_axis_title = ifelse(input$outcome_var == "Attrition", "Turnover", "Job Satisfaction")
+        bplot_title = paste0("Bar graph for ", x_axis_title)
         ggplot(df, aes_string(x = input$outcome_var, fill = input$outcome_var)) +
-          geom_bar(width = 0.7) + 
+          geom_bar(width = 0.7, fill = "lightblue") + 
           theme_minimal() + 
-          labs(title = bplot_title) + 
+          labs(title = bplot_title,
+               x = x_axis_title, y = "Employee Count") + 
           theme(legend.position = "bottom",
                 axis.text = element_text(size = 15),
                 title = element_text(size = 15))
@@ -144,3 +147,4 @@ server = function(input, output){
 }
 
 shinyApp(ui = ui , server = server)
+rsconnect::deployApp('./shiny_week8/')

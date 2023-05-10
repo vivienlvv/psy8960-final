@@ -27,8 +27,10 @@ An interactive web app is available by [clicking this link instead](https://vivi
 dat = readRDS("../data/combined_tbl.RDS")
 
 # Creating skinny object by retaining only relevant columns for the dashboard to minimize run-time
-skinny_dat = dat %>% select(MonthlyIncome, Attrition, JobSatisfaction,
-                            Department, EducationField, Gender, JobRole)
+skinny_dat = dat %>% 
+  select(MonthlyIncome, Attrition, JobSatisfaction,
+                            Department, EducationField, Gender, JobRole) 
+  
 
 saveRDS(skinny_dat, "../people_dashboard/people_dashboard_dat.rds")
 ```
@@ -50,7 +52,7 @@ In dashboard.Rmd, export a skinny dataset appropriate for the web application de
 
 ### My Response:
 - I created a shiny app that has five selector objects to allow users to choose an outcome and 4 potential subset variables. 
-- When outcome is continuous (i.e., monthly pay and overall job satisfaction), the univariate visualization I've selected is histogram to allow users to visualize the frequency distribution of the two variables. On the other hand, when outcome variable is discrete (i.e., turnover/attrition), I used bar graphs as a form of univariate distribution to show the counts of employees who had either turnover or stayed in the company. \ 
+- When outcome is continuous (i.e., monthly pay), the univariate visualization I've selected is histogram to allow users to visualize the frequency distribution of the variable. On the other hand, when outcome variable is discrete (i.e., turnover/attrition and job satisfaction), I used bar graphs as a form of univariate distribution to show the counts of employees who had either turnover or stayed in the company as we as number of employees giving different job satisfaction ratings. \ 
 - In terms of specific coding decisions
 
 
