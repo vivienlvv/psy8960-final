@@ -7,8 +7,8 @@ ui = fluidPage(
   # Application title (I added for aesthetics)
   titlePanel(
     h1("Spring 2023 PSY 8960 Final Exam - People Dashboard",
-    h4("By Vivien Lee"))
-  ),
+    h4("By Vivien Lee"))),
+  
   
   # Sidebar with a select input for 
   sidebarLayout(
@@ -53,44 +53,41 @@ ui = fluidPage(
   ) 
 )
 
-
 server = function(input, output){
   
-  # Loading in the RDS object as data once 
-  dashboard_data = readRDS("./people_dashboard_dat.rds")
-  
-  # Creating reactive data object for univariate visualization
-  dataInput =  reactive({
-  # 1. Selecting the outcome of interest & to slim down data even more
-  dashboard_data = dashboard_data %>%
-    select(input$outcome_var, Department, EducationField, Gender, JobRole)
+  # Loading in the RDS object as data  
+  dashboard_data = readRDS("people_dashboard_dat.rds")
 
-
-  # 2. Subsetting data by selected columns 
-  if(input$department != "All"){
-    dashboard_data = dashboard_data %>% filter(Department == input$department)
-  }
-  if(input$gender != "All"){
-    dashboard_data = dashboard_data %>% filter(Gender == input$gender)
-  }
-  if(input$education_field != "All"){
-    dashboard_data = dashboard_data %>% filter(EducationField == input$education_field)
-  }
-  if(input$job_role != "All"){
-    dashboard_data = dashboard_data %>% filter(JobRole == input$job_role)
-  }
-  return(dashboard_data)
-  })
-  
-  output$selected_outcome = renderText({
-    paste0("Selected variable: ", input$outcome_var)})
   
   # Rendering output ggplot to show histogram or bar graph
   output$histo = renderPlot({
-    df = dataInput()
     
-    # Creating histogram if selected outcome is Monthly Income
-    if(input$outcome_var == "MonthlyIncome"){
+    if(input$outcome_var != "None"){
+      
+      # We will slim down the dataset even further 
+      
+      ## 1. Selecting the outcome of interest & to slim down data even more
+      df = dashboard_data %>%
+        select(input$outcome_var, Department, EducationField, Gender, JobRole)
+      ## 2. Subsetting data by selected columns 
+      if(input$department != "All"){
+        df = df %>% filter(Department == input$department)
+      }
+      if(input$gender != "All"){
+        df = df %>% filter(Gender == input$gender)
+      }
+      if(input$education_field != "All"){
+        df = df %>% filter(EducationField == input$education_field)
+      }
+      if(input$job_role != "All"){
+        df = df %>% filter(JobRole == input$job_role)
+      }
+      
+      
+      # Creating univariate visualizations
+      
+      ## Creating histogram if selected outcome is Monthly Income
+      if(input$outcome_var == "MonthlyIncome"){
         hist_title = "Histogram for Monthly Income"
         ggplot(df, aes_string(x = input$outcome_var, fill = input$outcome_var)) +
           geom_histogram(bins = 30, fill = "lightblue") +
@@ -99,9 +96,8 @@ server = function(input, output){
                x = "Monthly Income", y = "Frequency") +
           theme(axis.text = element_text(size = 15),
                 title = element_text(size = 15))
-    }
-    # Creating bar graph if selected outcome is Turnover or Job Satisfaction
-    else{
+      } ## Creating bar graph if selected outcome is Turnover or Job Satisfaction
+      else{
         x_axis_title = ifelse(input$outcome_var == "Attrition", "Turnover", "Job Satisfaction")
         bplot_title = paste0("Bar graph for ", x_axis_title)
         ggplot(df, aes_string(x = input$outcome_var, fill = input$outcome_var)) +
@@ -112,6 +108,7 @@ server = function(input, output){
           theme(legend.position = "bottom",
                 axis.text = element_text(size = 15),
                 title = element_text(size = 15))
+      }
     }
   })
   
@@ -142,9 +139,8 @@ server = function(input, output){
                       "Standard Deviation" = sd(eval(sym(input$outcome_var)), na.rm = TRUE))
         }
     }
-
   })
 }
 
 shinyApp(ui = ui , server = server)
-rsconnect::deployApp('./shiny_week8/')
+# rsconnect::deployApp('./people_dashboard/')
