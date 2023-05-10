@@ -15,19 +15,15 @@ final_tbl = readRDS("../data/combined_tbl.RDS")
 
 # Analysis 
 
-## Hypothesis 1. There is a relationship between monthly pay and performance rating. Correlation and significance test, with a scatterplot and fit line.
+## H1. There is a relationship between monthly pay and performance rating. Correlation and significance test, with a scatterplot and fit line.
 h1 = final_tbl%>% cor_test(MonthlyIncome, PerformanceRating)
 h1
 
-
-## Hypothesis 2. Monthly pay differs by department. ANOVA and significance tests, with a boxplot split by department. Include a traditional ANOVA summary table (component name, SS, df, MS, F, p).
-
-## h2 = aov(MonthlyIncome ~ Department, data = final_tbl)
+## H2. Monthly pay differs by department. ANOVA and significance tests, with a boxplot split by department. Include a traditional ANOVA summary table (component name, SS, df, MS, F, p).
 h2 = final_tbl %>% anova_test(MonthlyIncome ~ Department, detailed = TRUE)
 h2
 
-
-## Hypothesis 3. Tenure can be predicted from relationship satisfaction, and this relationship is moderated by gender. Regression and significance tests, with scatterplot and fit lines. Note that you’ll need to plot predicted values (i.e., marginal effects), not raw data. Include a table of coefficients, t-tests, and p-values only (no SEs), with meaningful labels.
+## H3. Tenure can be predicted from relationship satisfaction, and this relationship is moderated by gender. Regression and significance tests, with scatterplot and fit lines. Note that you’ll need to plot predicted values (i.e., marginal effects), not raw data. Include a table of coefficients, t-tests, and p-values only (no SEs), with meaningful labels.
 h3 = lm(YearsAtCompany ~ 1 + RelationshipSatisfaction + RelationshipSatisfaction * Gender, data = final_tbl)
 H3_summary = summary(h3)
 h3_preds = fitted(h3) # Getting predicted values for scatterplot
@@ -59,7 +55,7 @@ h3_tbl = cbind(h3_preds, final_tbl)
   ggsave(filename="../fig/H2.png", units = "px", width = 1920, height = 1080)
 
 
-## Hypothesis 3 
+## Hypothesis 3: Scatterplot 
 (h3_tbl %>% 
     ggplot(aes(x = RelationshipSatisfaction, y = h3_preds,
                color = Gender, fill = Gender)) + 
@@ -94,29 +90,29 @@ display_num = function(number){
     return(return_number)
 }
 
-## Publication results for H1 
-
+## Publication results for H1:
 # Interpretation: The correlation between monthly income and performance ratings
-## was r(1468) = -0.017, p = 0.512. This test was not statistically significant.
-## This means that there is virtually no relationship between monthly income and
-## performance ratings. Our hypothesis (1) that there is a relationship between 
-## monthly pay and performance rating is rejected using an alpha value of .05, 
-## although this is likely due to range restriction in our dependent variable, 
-## performance ratings which have a range of 3-4.
+# was r(1468) = -.02, p = .51. This test was not statistically significant using
+# an alpha value of .05. This means that there is virtually no relationship 
+# between monthly income and performance ratings. We fail to reject our null 
+# hypothesis that there is no relationship between between monthly pay and 
+# performance ratings. In other words, our Hypothesis 1 that there is a 
+# relationship between monthly pay and performance rating is not supported by 
+# our findings, although this is likely due to range restriction in our dependent
+# variable, performance ratings which have a range of 3-4.
 paste0("The correlation between monthly income and performance ratings was r(",
        nrow(final_tbl) - 2, 
        ") = ", 
-       display_num(h1$statistic),
+       display_num(h1$cor),
        ", p = ",
        display_num(h1$p),
        ". This test was ",
        ifelse(h1$p <= .05, "", "not "),
        "statistically significant using an alpha value of .05. ",
-       "This means that there is virtually no relationship between monthly income and performance ratings. We fail to reject our null hypothesis that there is no relationship between between monthly pay and perfromance ratings. In other words, our Hypothesis 1 that there is a relationship between monthly pay and performance rating is not supported by our findings, although this is likely due to range restriction in our dependent variable, performance ratings which have a range of 3-4.")
+       "This means that there is virtually no relationship between monthly income and performance ratings. We fail to reject our null hypothesis that there is no relationship between between monthly pay and performance ratings. In other words, our Hypothesis 1 that there is a relationship between monthly pay and performance rating is not supported by our findings, although this is likely due to range restriction in our dependent variable, performance ratings which have a range of 3-4.")
 
 
-## Publication results for H2 
-
+## Publication results for H2:
 #### Extracting information to construct ANOVA table in publication 
 component_name = c("SS_Between", "SS_within", "SS_total")
 
@@ -154,8 +150,7 @@ paste0("Given the output from the ANOVA table, we can see that monthly pay signi
        ", p = ", p_val, ". Using alpha = .05, we reject the null hypothesis that monthly income does not differ by department. In other words, our evidence supports that Hypothesis 2 that monthly pay does differ by department.")
 
 
-## Publication results for H3 
-
+## Publication results for H3: 
 ### Building regression table for publication
 H3_tbl = H3_summary$coefficients %>%
   as.data.frame() %>% 
@@ -180,7 +175,7 @@ write_csv(H3_tbl, "../out/H3.csv")
 ## satisfaction and that such relationship is moderated by gender.
 paste0("Given the output from the regression table, both the main effect of relationship satisfaction (b = ", H3_tbl$coefficient[2],
        ", p = ", H3_tbl$p_val[2]
-       , ") on tenure", "and the moderating effect of gender on such relationship (b = ", H3_tbl$coefficient[4], ",p = ", H3_tbl$p_val[4], ") are not statistically significant at alpha = .05. In other words, the results fail to provide support for Hypothesis 3 which states that tenure can be predicted from relationship satisfaction and that such relationship is moderated by gender.")
+       , ") on tenure ", "and the moderating effect of gender on such relationship (b = ", H3_tbl$coefficient[4], ",p = ", H3_tbl$p_val[4], ") are not statistically significant at alpha = .05. In other words, the results fail to provide support for Hypothesis 3 which states that tenure can be predicted from relationship satisfaction and that such relationship is moderated by gender.")
 
 
 
