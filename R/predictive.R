@@ -85,18 +85,19 @@ cons_dtm = cleaned_corpus_cons %>%
 
 #### 1.2 Combining features (n-grams & employee background)
 
-##### Getting bigram features in matrix form to be merged with original dataset 
+##### 1.2.1 Getting bigram features in matrix form to be merged with original dataset 
 pros_dtm_mat = as.matrix(pros_dtm) 
 pros_dtm_mat = data.frame(employeeID = rownames(pros_dtm_mat), pros_dtm_mat)
 
 cons_dtm_mat = as.matrix(cons_dtm)
 cons_dtm_mat = data.frame(employeeID = rownames(cons_dtm_mat), cons_dtm_mat)
 
+
+##### 1.2.2 Creating Tibbles ready for training building classifiers
 # This is the demographic tibble where I removed the text entries and variables w/o variance
 ml_bg_tbl =  final_tbl %>% 
   select(-c(pros, cons, EmployeeCount, StandardHours, Over18))
 
-##### Creating Tibbles ready for training building classifiers
 # 1. ML Tibble without language features 
 ml_tbl = ml_bg_tbl %>% 
   select(-employeeID)
@@ -187,17 +188,20 @@ ml_combined_tbl_output = model_building(ml_combined_tbl)
 stopCluster(local_cluster)
 registerDoSEQ()
 
+# 2.3 Visualizing performance of different models 
+dotplot(resamples(ml_tbl_output[[1]]))
 
 
 
 # Publication
 
-## Preparing output tables
 
-### Creating a function that takes model list and test data as input and return 
+### STEP 3: Preparing output tables
+
+### 3.1 Creating a function that takes model list and test data as input and return 
 ### nicely formatted APA table 
 
-results = function(train_mod = mod_ls[[1]], test_data = ml_tbl_test, features){
+results = function(train_mod, test_data = ml_tbl_test, features){
   algo = train_mod$method
 
   # Creating confusion matrix to get holdout metrics
@@ -223,6 +227,7 @@ results = function(train_mod = mod_ls[[1]], test_data = ml_tbl_test, features){
 }
 
 
+### 3.2 Getting ML output 
 #### Obtaining ML output table with only background information in dataset
 ml_output_tbl = as_tibble(t(sapply(ml_tbl_output[[1]], results,
                                    test_data = ml_tbl_output[[2]],
@@ -233,6 +238,8 @@ ml_combined_output_tbl = as_tibble(t(sapply(ml_combined_tbl_output[[1]], results
                                             test_data = ml_combined_tbl_output[[2]],
                                             features = "Background + Lang")))
 
+
+### 3.3 Answering questions and saving output
 ## STEP 1. Comparing all models to find the "best" model
 
 #### Making output table with all models 
@@ -251,9 +258,9 @@ write_csv(all_output_tbl, "../out/part2_all_models.csv")
 ### 2) What characteristics of how you created the final model likely made the biggest impact in maximizing its performance? How do you know? Be sure to interpret specific numbers in the table you just created.
 ### I think the final model- random forest- likely have the best performance 
 ### (0.99 accuracy) because it is able to capture non-linearity (i.e., higher order)
-### effects among predictors that logistic (0.89 accuracy ) and elastic net 
+### effects among predictors that logistic (0.89 accuracy) and elastic net 
 ### regression (0.90 accuracy) are not well-equipped to do. This explanation is 
-### also supported by the fact that xgboost, another tree-based model, is has 
+### also supported by the fact that xgboost, another tree-based model, also has 
 ### an accuracy of 0.98 which is much higher than logistic regression and 
 ### elastic regression models. 
 ############################################################################### 
