@@ -59,7 +59,7 @@ h3_tbl = cbind(h3_preds, final_tbl)
   ggsave(filename="../fig/H2.png", units = "px", width = 1920, height = 1080)
 
 
-## Hypothesis 3 (VERY CONFUSED BY THIS)
+## Hypothesis 3 
 (h3_tbl %>% 
     ggplot(aes(x = RelationshipSatisfaction, y = h3_preds,
                color = Gender, fill = Gender)) + 
@@ -94,6 +94,7 @@ display_num = function(number){
 }
 
 ## Publication results for H1 
+
 # Interpretation: The correlation between monthly income and performance ratings
 ## was r(1468) = -0.017, p = 0.512. This test was not statistically significant.
 ## This means that there is virtually no relationship between monthly income and
@@ -153,6 +154,7 @@ paste0("Given the output from the ANOVA table, we can see that monthly pay signi
 
 
 ## Publication results for H3 
+
 ### Building regression table for publication
 H3_tbl = H3_summary$coefficients %>%
   as.data.frame() %>% 
