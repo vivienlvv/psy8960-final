@@ -9,9 +9,6 @@ library(textstem)
 library(RWeka)
 
 library(doParallel)
-# library(ldatuning)
-# library(topicmodels)
-
 library(caret)
 
 # Data Import and Cleaning
