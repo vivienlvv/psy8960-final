@@ -82,6 +82,7 @@ h3_tbl = cbind(h3_preds, final_tbl)
 display_num = function(number){
   
     # Rounding & Retaining only two decimals
+    ## I added trimws() because for some reason there is an extra space in some numbers  
     return_number = trimws(format(round(number,2), nsmall = 2))
     
     # Only changes things if these are decimals less than 1 or greater than -1
@@ -160,15 +161,19 @@ H3_tbl = H3_summary$coefficients %>%
   as.data.frame() %>% 
   select(-`Std. Error`) %>% 
   mutate(across(where(is.numeric), display_num)) # Applying formatting
-colnames(H3_tbl) = c("coefficient", "t_stat", "p_val")
-rownames(H3_tbl) = c("Intercept", "Relationship Satisfaction",
-                     "Gender", "Relationship Satisfaction x Gender")
+H3_tbl = cbind(term = c("Intercept",
+                        "Relationship Satisfaction",
+                        "Gender",
+                        "Relationship Satisfaction x Gender"),
+                 H3_tbl)
+colnames(H3_tbl) = c("term", "coefficient", "t_stat", "p_val")
+rownames(H3_tbl) = 1:4
 H3_tbl
 write_csv(H3_tbl, "../out/H3.csv")
 
 # Interpretation (Publication ready sentence): 
 ## Given the output from the regression table, the main effect of relationship 
-## satisfaction (b = .37, p = .11) on tenureand the moderating effect of gender 
+## satisfaction (b = .37, p = .11) on tenure and the moderating effect of gender 
 ## on such relationship (b = -.43,p = .16) are not statistically significant 
 ## at alpha = .05. In other words, the results fail to provide support for 
 ## Hypothesis 3 which states that tenure can be predicted from relationship 
