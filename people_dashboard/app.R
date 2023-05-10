@@ -43,11 +43,11 @@ ui = fluidPage(
                               "Sales Representative", "Research Director", "Human Resources", "All"))
       
     ),
-    # Display interactive histogram 
-    mainPanel(width = 6,
+    # Display Plots and Tables
+    mainPanel(
+      width = 6,
       h2("Univariate Visualization"),
       plotOutput("histo"),
-      textOutput("selected_outcome"),
       h2("Output Table"),
       tableOutput("output_tbl")
     )
@@ -91,7 +91,7 @@ server = function(input, output){
     
     # Creating histogram if selected outcome is not Turnover
     if(input$outcome_var != "Attrition"){
-        hist_title = paste0("Histogram for outcome: ", input$outcome_var)
+        hist_title = paste0("Histogram")
         ggplot(df, aes_string(x = input$outcome_var, fill = input$outcome_var)) +
           geom_histogram(bins = 30, fill = "lightblue") +
           theme_minimal() + 
@@ -101,7 +101,7 @@ server = function(input, output){
     }
     # Creating bar graph if selected outcome is Turnover
     else{
-        bplot_title = paste0("Counts for ", input$outcome_var)
+        bplot_title = paste0("Counts")
         ggplot(df, aes_string(x = input$outcome_var, fill = input$outcome_var)) +
           geom_bar(width = 0.7) + 
           theme_minimal() + 
@@ -123,18 +123,21 @@ server = function(input, output){
     subset_input = c(input$department, input$gender,input$education_field, input$job_role)
     groupings = subset_options[subset_input != "All"] 
     
-    if(input$outcome_var != "None"){ # Once the person has selected an outcome of interest
+    # Once the person has selected an outcome of interest
+    if(input$outcome_var != "None"){ 
         if(length(groupings) == 0 ){ # When not subsetted by any group 
           df_table %>%
+            # eval() and sym() are used becasue shiny is not evaluating input$outcome_var properly in the context of df_table
             summarize("Average" = mean(eval(sym(input$outcome_var)), na.rm = TRUE),
                       "Standard Deviation" = sd(eval(sym(input$outcome_var)), na.rm = TRUE))
         }else{ # When subsetted by one or more groups
           df_table %>%
+            ## I used syms() to turn the subset vector into symbols 
+            ### !!! is used to evaluate a list of expressions
             group_by(!!! syms(groupings)) %>% 
             summarize("Average" = mean(eval(sym(input$outcome_var)), na.rm = TRUE),
                       "Standard Deviation" = sd(eval(sym(input$outcome_var)), na.rm = TRUE))
         }
-      
     }
 
   })

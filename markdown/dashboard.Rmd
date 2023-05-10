@@ -26,16 +26,17 @@ An interactive web app is available by [clicking this link instead](https://vivi
 # Importing rds object frorm part 1
 dat = readRDS("../data/combined_tbl.RDS")
 
-# Creating skinny object by retaining only relevant columns 
+# Creating skinny object by retaining only relevant columns for the dashboard to minimize run-time
 skinny_dat = dat %>% select(MonthlyIncome, Attrition, JobSatisfaction,
                             Department, EducationField, Gender, JobRole)
 
 saveRDS(skinny_dat, "../people_dashboard/people_dashboard_dat.rds")
 ```
 
+
+
+# **Explanation on specific approach and decisions** 
 In dashboard.Rmd, export a skinny dataset appropriate for the web application described below starting from the object you created in Part 1. In this file, explain why you chose the particular approach you chose to accomplish the steps below. Also include a comment containing a link to your app running on shinyapps.io.
-
-
 
 2. In a shiny app called people_dashboard, enable users to do the following: \ 
 - Choose whether they want to examine monthly pay, turnover status, or overall job satisfaction. \ 
@@ -47,6 +48,10 @@ In dashboard.Rmd, export a skinny dataset appropriate for the web application de
 - The app displays an appropriate univariate visualization given whatever combination of options they choose. \ 
 - The app displays a summary table of means and SDs of the selected outcome variable, split by any selected filtering terms. \ 
 
+### My Response:
+- I created a shiny app that has five selector objects to allow users to choose an outcome and 4 potential subset variables. 
+- When outcome is continuous (i.e., monthly pay and overall job satisfaction), the univariate visualization I've selected is histogram to allow users to visualize the frequency distribution of the two variables. On the other hand, when outcome variable is discrete (i.e., turnover/attrition), I used bar graphs as a form of univariate distribution to show the counts of employees who had either turnover or stayed in the company. \ 
+- In terms of specific coding decisions
 
 
 
