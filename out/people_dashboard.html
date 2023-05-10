@@ -1676,19 +1676,29 @@ whatever combination of options they choose.  </li>
 <li>The app displays a summary table of means and SDs of the selected
 outcome variable, split by any selected filtering terms.  </li>
 </ul>
-<div id="my-response" class="section level3">
-<h3>My Response:</h3>
+<div id="my-explanation" class="section level3">
+<h3>My Explanation:</h3>
 <ul>
 <li>I created a shiny app that has five selector objects to allow users
 to choose an outcome and 4 potential subset variables.</li>
 <li>When outcome is continuous (i.e., monthly pay), the univariate
 visualization I’ve selected is histogram to allow users to visualize the
-frequency distribution of the variable. On the other hand, when outcome
-variable is discrete (i.e., turnover/attrition and job satisfaction), I
-used bar graphs as a form of univariate distribution to show the counts
-of employees who had either turnover or stayed in the company as we as
-number of employees giving different job satisfaction ratings.  </li>
-<li>In terms of specific coding decisions</li>
+frequency distribution of the monthly income On the other hand, when
+outcome variable is discrete-either nominal or ordinal (i.e.,
+turnover/attrition and job satisfaction), I used bar graphs as a form of
+univariate distribution to show the counts of employees who had either
+turnover or stayed in the company as we as number of employees giving
+different job satisfaction ratings.  </li>
+<li>In terms of specific coding decisions: For both displaying graphs
+and tables, I used a series of nested if-else statements. Specifically,
+I made sure to not display any table or visualization when no outcome
+has been selected. Once outcome has been chosen, for visualization, I
+rendered a histogram if the outcome of interest is monthly income, else
+I rendered a bar graph. For the output table, I followed a similar logic
+in that if a user did not select to subset the data, I will display a
+table of overall mean and sd, else I will apply groupings using the
+group_by() functions and pass as many column names as the user has
+selected.</li>
 </ul>
 </div>
 </div>
