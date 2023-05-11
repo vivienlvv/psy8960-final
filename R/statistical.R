@@ -141,7 +141,10 @@ H2_tbl
 write_csv(H2_tbl, "../out/H2.csv")
 
 # Interpretation (Publication ready sentence): 
-# "Given the output from the ANOVA table, we can see that monthly pay is significantly different by department, F(2,1467) = 3.20, p = .04. Using alpha = .05, we reject the null hypothesis that monthly income does not differ by department. In other words, our evidence supports the Hypothesis 2 that monthly pay does differ by department."
+# "Given the output from the ANOVA table, we can see that monthly pay is significantly
+# different by department, F(2,1467) = 3.20, p = .04. Using alpha = .05, 
+# we reject the null hypothesis that monthly income does not differ by department.
+# In other words, our evidence supports the Hypothesis 2 that monthly pay does differ by department."
 paste0("Given the output from the ANOVA table, we can see that monthly pay is ",
        ifelse(as.numeric(p_val) <= .05, "", "not "),
        "significantly different by department, ",
@@ -171,7 +174,10 @@ H3_tbl
 write_csv(H3_tbl, "../out/H3.csv")
 
 # Interpretation (Publication ready sentence): 
-# Given the output from the regression table, the main effect of relationship satisfaction (b = .37, p = .11) on tenure is not significant and the moderating effect of gender on such relationship (b = -.43,p = .16), is not significant at alpha = .05. In other words, the results do not provide support for Hypothesis 3 which states that tenure can be predicted from relationship satisfaction and that such relationship is moderated by gender.
+# Given the output from the regression table, the main effect of relationship satisfaction (b = .37, p = .11)
+# on tenure is not significant and the moderating effect of gender on such relationship (b = -.43,p = .16),
+# is not significant at alpha = .05. In other words, the results do not provide support for
+# Hypothesis 3 which states that tenure can be predicted from relationship satisfaction and that such relationship is moderated by gender.
 paste0("Given the output from the regression table, the main effect of relationship satisfaction (b = ", H3_tbl$coefficient[2],
        ", p = ", H3_tbl$p_val[2]
        , ") on tenure is ",
