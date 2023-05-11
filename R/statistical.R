@@ -93,13 +93,10 @@ display_num = function(number){
 ## Publication results for H1:
 # Interpretation: The correlation between monthly income and performance ratings
 # was r(1468) = -.02, p = .51. This test was not statistically significant using
-# an alpha value of .05. This means that there is virtually no relationship 
-# between monthly income and performance ratings. We fail to reject our null 
-# hypothesis that there is no relationship between between monthly pay and 
-# performance ratings. In other words, our Hypothesis 1 that there is a 
-# relationship between monthly pay and performance rating is not supported by 
-# our findings, although this is likely due to range restriction in our dependent
-# variable, performance ratings which have a range of 3-4.
+# an alpha value of .05. We fail to reject our null hypothesis that there is no 
+# relationship between between monthly pay and performance ratings. In other words,
+# our Hypothesis 1 that there is a relationship between monthly pay and performance rating is not supported by our findings.
+# *** although this is likely due to range restriction in our dependent variable, performance ratings which have a range of 3-4.
 paste0("The correlation between monthly income and performance ratings was r(",
        nrow(final_tbl) - 2, 
        ") = ", 
@@ -108,8 +105,11 @@ paste0("The correlation between monthly income and performance ratings was r(",
        display_num(h1$p),
        ". This test was ",
        ifelse(h1$p <= .05, "", "not "),
-       "statistically significant using an alpha value of .05. ",
-       "This means that there is virtually no relationship between monthly income and performance ratings. We fail to reject our null hypothesis that there is no relationship between between monthly pay and performance ratings. In other words, our Hypothesis 1 that there is a relationship between monthly pay and performance rating is not supported by our findings, although this is likely due to range restriction in our dependent variable, performance ratings which have a range of 3-4.")
+       "statistically significant using an alpha value of .05. We ",
+       ifelse(h1$p <= .05, "", "fail to "),
+       "reject our null hypothesis that there is no relationship between between monthly pay and performance ratings. In other words, our Hypothesis 1 that there is a relationship between monthly pay and performance rating is ",
+       ifelse(h1$p <= .05, "", "not "),
+       "supported by our findings.")
 
 
 ## Publication results for H2:
@@ -140,14 +140,18 @@ H2_tbl = data.frame(Component = component_name,
 H2_tbl
 write_csv(H2_tbl, "../out/H2.csv")
 
-# Interpretation (Publication ready sentence): Given the output from the 
-## ANOVA table, we can see that monthly pay significantly differs by department 
-## F(2,1467) = 3.20, p = .04. Using alpha = .05, we reject the null hypothesis 
-## that monthly income does not differ by department. In other words, we have 
-## evidence for hypothesis 2 that monthly pay does differ by department.
-paste0("Given the output from the ANOVA table, we can see that monthly pay significantly differs by department, ",
+# Interpretation (Publication ready sentence): 
+# "Given the output from the ANOVA table, we can see that monthly pay is significantly different by department, F(2,1467) = 3.20, p = .04. Using alpha = .05, we reject the null hypothesis that monthly income does not differ by department. In other words, our evidence supports the Hypothesis 2 that monthly pay does differ by department."
+paste0("Given the output from the ANOVA table, we can see that monthly pay is ",
+       ifelse(as.numeric(p_val) <= .05, "", "not "),
+       "significantly different by department, ",
        "F(", df_between, ",", df_within, ") = ", f_val, 
-       ", p = ", p_val, ". Using alpha = .05, we reject the null hypothesis that monthly income does not differ by department. In other words, our evidence supports that Hypothesis 2 that monthly pay does differ by department.")
+       ", p = ", p_val, ". Using alpha = .05, we ",
+       ifelse(as.numeric(p_val) <= .05, "", "fail to "),
+       "reject the null hypothesis that monthly income does not differ by department. ",
+       "In other words, our evidence ",
+       ifelse(as.numeric(p_val) <= .05, "supports ", "does not support "),
+       "the Hypothesis 2 that monthly pay does differ by department.")
 
 
 ## Publication results for H3: 
@@ -167,15 +171,17 @@ H3_tbl
 write_csv(H3_tbl, "../out/H3.csv")
 
 # Interpretation (Publication ready sentence): 
-## Given the output from the regression table, the main effect of relationship 
-## satisfaction (b = .37, p = .11) on tenure and the moderating effect of gender 
-## on such relationship (b = -.43,p = .16) are not statistically significant 
-## at alpha = .05. In other words, the results fail to provide support for 
-## Hypothesis 3 which states that tenure can be predicted from relationship 
-## satisfaction and that such relationship is moderated by gender.
-paste0("Given the output from the regression table, both the main effect of relationship satisfaction (b = ", H3_tbl$coefficient[2],
+# Given the output from the regression table, the main effect of relationship satisfaction (b = .37, p = .11) on tenure is not significant and the moderating effect of gender on such relationship (b = -.43,p = .16), is not significant at alpha = .05. In other words, the results do not provide support for Hypothesis 3 which states that tenure can be predicted from relationship satisfaction and that such relationship is moderated by gender.
+paste0("Given the output from the regression table, the main effect of relationship satisfaction (b = ", H3_tbl$coefficient[2],
        ", p = ", H3_tbl$p_val[2]
-       , ") on tenure ", "and the moderating effect of gender on such relationship (b = ", H3_tbl$coefficient[4], ",p = ", H3_tbl$p_val[4], ") are not statistically significant at alpha = .05. In other words, the results fail to provide support for Hypothesis 3 which states that tenure can be predicted from relationship satisfaction and that such relationship is moderated by gender.")
+       , ") on tenure is ",
+       ifelse(as.numeric(H3_tbl$p_val[2]) <= .05, "", "not "), "significant ",
+       "and the moderating effect of gender on such relationship (b = ",
+       H3_tbl$coefficient[4], ",p = ", H3_tbl$p_val[4], "), is ",
+       ifelse(as.numeric(H3_tbl$p_val[4]) <= .05, "", "not "), "significant at alpha = .05. ",
+       "In other words, the results do ",
+       ifelse(as.numeric(H3_tbl$p_val[2]) > .05 | as.numeric(H3_tbl$p_val[4]) > .05, "not ", " "),
+       "provide support for Hypothesis 3 which states that tenure can be predicted from relationship satisfaction and that such relationship is moderated by gender.")
 
 
 
