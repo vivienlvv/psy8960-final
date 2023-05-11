@@ -116,22 +116,22 @@ server = function(input, output){
     df_table = dashboard_data %>% 
       mutate(Attrition = ifelse(Attrition == "No", 0, 1)) 
     
-    # Filtering to get subset columns for group_by()  
+    ## Filtering to get subset columns for group_by()  
     subset_options = c("Department", "Gender", "EducationField", "JobRole")
     subset_input = c(input$department, input$gender,input$education_field, input$job_role)
     groupings = subset_options[subset_input != "All"] 
     
-    # Once the person has selected an outcome of interest
+    ## Once the person has selected an outcome of interest
     if(input$outcome_var != "None"){ 
         if(length(groupings) == 0 ){ # When not subsetted by any group 
           df_table %>%
             # eval() and sym() are used becasue shiny is not evaluating input$outcome_var properly in the context of df_table
             summarize("Average" = mean(eval(sym(input$outcome_var)), na.rm = TRUE),
                       "Standard Deviation" = sd(eval(sym(input$outcome_var)), na.rm = TRUE))
-        }else{ # When subsetted by one or more groups
+        }else{ ## When subsetted by one or more groups
           df_table %>%
             ## I used syms() to turn the subset vector into symbols 
-            ### !!! is used to evaluate a list of expressions
+            ## !!! is used to evaluate a list of expressions
             group_by(!!! syms(groupings)) %>% 
             summarize("Average" = mean(eval(sym(input$outcome_var)), na.rm = TRUE),
                       "Standard Deviation" = sd(eval(sym(input$outcome_var)), na.rm = TRUE))
